@@ -4,7 +4,7 @@ import HW240620.animal.Animal;
 import HW240620.animal.Dog;
 
 public class HW240620_4 {
-    public static void main_(String[] args) throws Exception {
+    public static void main_() throws Exception {
 
         //-- 访问权限修饰符
         //public 所有

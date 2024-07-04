@@ -2,7 +2,7 @@
 package HW240523;
 
 public class HW240523_0 {
-    public static void main_(String[] args) throws Exception {
+    public static void main_() throws Exception {
         System.out.println("*********************************");
         System.out.println("***** Homework_0 2024_05_23 *****");
         System.out.println("*********************************");

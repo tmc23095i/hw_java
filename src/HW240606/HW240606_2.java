@@ -10,7 +10,7 @@ interface Lambda_printClassNameSearch {
 }
 
 public class HW240606_2 {
-    public static void main_(String[] args) throws Exception {
+    public static void main_() throws Exception {
         System.out.println("*********************************");
         System.out.println("***** Homework_2 2024_06_06 *****");
         System.out.println("*********************************");
