@@ -1,6 +1,4 @@
 
-import java.util.Scanner;
-
 import HW240523.HW240523_0;
 import HW240530.HW240530_1;
 import HW240606.HW240606_2;
@@ -37,12 +35,14 @@ public class App {
                 case 4:
                     HW240620_4.main_();
                     break;
+                // ... code for the next hw
                 default:
                     HW240523_0.main_();
                     HW240530_1.main_();
                     HW240606_2.main_();
                     HW240613_3.main_();
                     HW240620_4.main_();
+                    // ... code for the next hw
                     break;
             }
         }
@@ -53,7 +53,7 @@ public class App {
     public static int ioinValue() throws Exception {
         //
         int ch_io;//one char of the std-in stream
-        int[] digits = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };//the digits of the value user typed
+        int[] digits = { 0, 0, 0, 0, 0, 0, 0, 0 };//the digits of the value user typed
         int digit_cnt = 0;//the digit count of the value
 
         int value_sign = 1;// if the value is positive or negative
@@ -71,6 +71,11 @@ public class App {
                 if (VALUE_READING == true) {
                     break;
                 }
+                //the value has not been typed
+                else {
+                    prev_ch = ch_io;
+                    continue;
+                }
             }
             //if digit char
             else {
@@ -86,10 +91,12 @@ public class App {
                 //record the digit of the value
                 digits[digit_cnt] = digit;
                 digit_cnt++;
+                // limit value range: +/- 99,999,999
+                if (digit_cnt == 8) {
+                    break;
+                }
             }
-            //the value has not been typed
-            prev_ch = ch_io;
-            continue;
+
         }
 
         // calc the value
