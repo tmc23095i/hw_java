@@ -4,6 +4,8 @@ import HW240530.HW240530_1;
 import HW240606.HW240606_2;
 import HW240613.HW240613_3;
 import HW240620.HW240620_4;
+import HW240829.HW240829_5;
+import HW240912.HW240912_6;
 
 @SuppressWarnings("unused")
 
@@ -17,12 +19,6 @@ public class App {
             //
             int hw_i = ioinValue();
             switch (hw_i) {
-                // 未使用反射机制的原因
-                // 第一次从老师那里听说反射的时候是很惊讶的, 因为从C/C++的思维模式出发, 这种东西几乎是不可能, 但是这种东西确实在自动化分析处理一些源码的时候很方便.
-                // 优点可观但忍不愿使用的原因有三:
-                // 1. 感觉不太安全, 因为竟然直接从内码找源码逻辑, 即使Java本身可能作为加密/解密者
-                // 2. 感觉浪费性能, 因为执行时需要查找源码(猜测), 所以相当于计算代偿空间, 损失了运行时效率
-                // 3. 反射的行为模式很像动态语言, 所以没有对自己程序完全掌控的安全感
                 case -1:
                     EXIT_APP = true;
                     break;
@@ -41,6 +37,13 @@ public class App {
                 case 4:
                     HW240620_4.main_();
                     break;
+                case 5:
+                    //== ...
+                    HW240829_5.main_();
+                    break;
+                case 6:
+                    HW240912_6.main_();
+                    break;
                 // ... code for the next hw
                 default:
                     HW240523_0.main_();
@@ -48,6 +51,7 @@ public class App {
                     HW240606_2.main_();
                     HW240613_3.main_();
                     HW240620_4.main_();
+                    HW240912_6.main_();
                     // ... code for the next hw
                     break;
             }
