@@ -852,6 +852,13 @@ class Sudoku {
                 case -1:
                     return null;
                 case 1:
+                    { //== 临时补丁: 防止不停的给出唯一解的数独答案
+                    locals = new Locals$AnswerGuess();
+                    int d = try_sudoku.getCellDigit(0);
+                    try_sudoku.cells[0].setDigit(0);
+                    locals.initLevel(try_sudoku);
+                    try_sudoku.cells[0].setDigit(d);
+                    }
                     return try_sudoku;
                 default:
                     // unsure answer, need to guess, see below...
