@@ -51,6 +51,7 @@ public class App {
                     HW240606_2.main_();
                     HW240613_3.main_();
                     HW240620_4.main_();
+                    HW240829_5.main_();
                     HW240912_6.main_();
                     // ... code for the next hw
                     break;
