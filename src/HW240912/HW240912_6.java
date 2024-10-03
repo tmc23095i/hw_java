@@ -12,37 +12,37 @@ public class HW240912_6 {
 
         // new a sudoku obj
         Sudoku sudoku = new Sudoku();
-        boolean b = sudoku.loadSudoku(str1);
+        boolean b = sudoku.LoadSudoku(str1);
         if (b == false) {
             System.out.println(">> load: failed!");
             return;
         }
 
         // get sudoku string
-        String str = sudoku.toString();
+        String str = sudoku.ToString();
         System.out.println(">> loading: " + str);
 
         // show the loaded sudoku
-        System.out.println(">> loaded: \n" + sudoku.toPrints());
+        System.out.println(">> loaded: \n" + sudoku.ToPrints());
 
         // get answer of sudoku
-        System.out.println(">> detectAnswer: " + sudoku.detectAnser());
+        System.out.println(">> detectAnswer: " + sudoku.DetectAnser());
 
         // commit all determinable cells
-        sudoku.commitAll();
-        System.out.println(">> commitAll: \n" + sudoku.toPrints());
+        sudoku.CommitAll();
+        System.out.println(">> commitAll: \n" + sudoku.ToPrints());
 
         // get all sudokus in the world (all answers of empty sudoku)
         System.out.println(">> Any key to get the next answer, or Q to finish.");
         long ai = 0; //== type too short
         sudoku = new Sudoku();
-        sudoku.loadSudoku(str0);
+        sudoku.LoadSudoku(str0);
         while (true) {
             // get one
-            Sudoku one = sudoku.guessAnswers();
+            Sudoku one = sudoku.GuessAnswers();
             if (one != null) {
                 ai++;
-                System.out.println(">> guessAnswer: #" + ai + "\n" + one.toPrints());
+                System.out.println(">> guessAnswer: #" + ai + "\n" + one.ToPrints());
             } else {
                 System.out.println(">> guessAnswer: #OVER");
                 break;
@@ -54,13 +54,13 @@ public class HW240912_6 {
                 break;
             }
         }
-        sudoku.guessEnd();
+        sudoku.GuessEnd();
 
         //== history operations
 
     }
 
-    public String margeStrings(String strs[]) {
+    public String MargeStrings(String strs[]) {
         String retn = "";
 
         int cnt = strs.length;
@@ -93,29 +93,29 @@ public class HW240912_6 {
  */
 class Sudoku {
     //-- static
-    private final static int col_cnt = 9; // the count of the cells per col in the sudoku
-    private final static int row_cnt = 9; // the count of the cells per row in the sudoku
-    private final static int cell_cnt = 81; // the count of the cells in the sudoku
-    private final static int colcnt_inblo = 3; // the count of the cells per col in one block
-    private final static int rowcnt_inblo = 3; // the count of the cells per col in one block
-    private final static int cellcnt_inblo = 9; // the count of cells in one block
+    private final static int SIZE_COL_CNT = 9; // the count of the cells per col in the sudoku
+    private final static int SIZE_ROW_CNT = 9; // the count of the cells per row in the sudoku
+    private final static int SIZE_CELL_CNT = 81; // the count of the cells in the sudoku
+    private final static int SIZE_BLO_COLCNT = 3; // the count of the cells per col in one block
+    private final static int SIZE_BLO_ROWCNT = 3; // the count of the cells per col in one block
+    private final static int SIZE_BLO_CELLCNT = 9; // the count of cells in one block
 
-    private final static int NOP = -1; // used to represent the diff-range
-    private final static int ROW = 0; // used to represent the row-range
-    private final static int COL = 1; // used to represent the col-range
-    private final static int BLO = 2; // used to represent the blo-range
-    private final static int BLO_ONLY = 3; // used to represent the blo-range(non-row&non-col)
-    private final static int BLO_ROW = 4; // used to represent the blo&row-range
-    private final static int BLO_COL = 5;// used to represent the blo&col-range
+    private final static int RANGE_NA = -1; // used to represent the diff-range
+    private final static int RANGE_ROW = 0; // used to represent the row-range
+    private final static int RANGE_COL = 1; // used to represent the col-range
+    private final static int RANGE_BLO_ANY = 2; // used to represent the blo-range
+    private final static int RANGE_BLO_ONLY = 3; // used to represent the blo-range(non-row&non-col)
+    private final static int RANGE_BLO_ROW = 4; // used to represent the blo&row-range
+    private final static int RANGE_BLO_COL = 5;// used to represent the blo&col-range
 
     //-- private
     private Cell[] cells; // the cells of the sudoku
     //history
-    private boolean enable_history;
+    private boolean FLAG_HISTORY;
     private History history;
     //guess
-    private Sudoku guess_sudoku;
-    private GuessTodo guess_todo;
+    private Sudoku guessingSudoku;
+    private GuessTodo guessingTodo;
 
     //-- public
 
@@ -124,9 +124,9 @@ class Sudoku {
      */
     public Sudoku() {
         // init the cell-array: alloc space
-        initCells();
+        InitCells();
 
-        enable_history = false;
+        FLAG_HISTORY = false;
         history = null;
     }
 
@@ -139,18 +139,18 @@ class Sudoku {
         //== 好像是不用检查的 因为本类数独如果有错误是不会提交的  所以现有的数独暂时都是格子独立且正确的
         this();
 
-        int srcd;
+        int dgt;
         for (int i = 0; i < 81; i++) {
-            srcd = src.getCellDigit(i);
-            if (srcd == 0) {
+            dgt = src.GetCellDigit(i);
+            if (dgt == 0) {
                 continue;
             }
-            this.commit(i, srcd, false);
+            this.Commit(i, dgt, false);
         }
 
         if (src.history != null) {
             this.history = new History(src.history);
-            this.enable_history = src.enable_history;
+            this.FLAG_HISTORY = src.FLAG_HISTORY;
         }
     }
 
@@ -160,13 +160,13 @@ class Sudoku {
      * @return 返回真, 如果函数成功
      * @apiNote 如果函数失败, 数独会恢复到原来的样子
      */
-    public boolean loadSudoku(String s) {
+    public boolean LoadSudoku(String s) {
         if (s.length() < 81) { // invalid sudoku-string
             return false;
         }
 
-        char backup[] = toHash();
-        this.initCells();
+        char backup[] = ToHash();
+        this.InitCells();
 
         char str[] = s.toCharArray();
         int index = 0;
@@ -179,7 +179,7 @@ class Sudoku {
                 continue;
             }
 
-            boolean b = commit(index++, digit);
+            boolean b = Commit(index++, digit);
             // bad sudoku
             if (b == false) {
                 index = 0;
@@ -193,7 +193,7 @@ class Sudoku {
 
         // recover to original suduko when failed
         if (index != 81) {
-            loadCorrectHash(backup);
+            LoadCorrectHash(backup);
             return false;
         }
 
@@ -206,21 +206,21 @@ class Sudoku {
      * @return 返回真, 如果函数成功
      * @apiNote 如果函数失败, 数独会恢复到原来的样子
      */
-    public boolean loadSudoku(char[] hash) {
-        char backup[] = toHash();
-        this.initCells();
+    public boolean LoadSudoku(char[] hash) {
+        char backup[] = ToHash();
+        this.InitCells();
 
         int index = 0;
         for (char c : hash) {
-            int hnib = c >>> 4;
-            int lnib = c & 0b1111;
-            boolean b = commit(index++, hnib);
+            int hnib = c >>> 4; // high(right) nibble
+            int lnib = c & 0b1111; // low(left) nibble
+            boolean b = Commit(index++, hnib);
             if (b == false) { // bad sudoku
                 index = 0;
                 break;
             }
             if (lnib != 0b1111) {
-                b = commit(index++, lnib);
+                b = Commit(index++, lnib);
                 if (b == false) { // bad sudoku
                     index = 0;
                     break;
@@ -230,7 +230,7 @@ class Sudoku {
 
         // recover to original suduko when failed
         if (index != 81) {
-            loadCorrectHash(backup);
+            LoadCorrectHash(backup);
             return false;
         }
 
@@ -241,22 +241,22 @@ class Sudoku {
      * 获取一个数独的“哈希”, 是任何数独的唯一标识, 具有不可碰撞性, 可以展开(恢复)到一个数独
      * @return 返回数独的哈希
      */
-    public char[] toHash() {
-        char hash[] = new char[(cell_cnt + 1) / 2];
+    public char[] ToHash() {
+        char hash[] = new char[(SIZE_CELL_CNT + 1) / 2];
         int digit;
 
-        for (int i = 0, hi = 0; i < cell_cnt; i += 2) {
-            digit = cells[i].getDigit();
+        for (int i = 0, hi = 0; i < SIZE_CELL_CNT; i += 2) {
+            digit = cells[i].GetDigit();
             digit <<= 4;
             hash[hi++] = (char) digit;
         }
-        for (int i = 1, hi = 0; i < cell_cnt; i += 2) {
-            digit = cells[i].getDigit();
+        for (int i = 1, hi = 0; i < SIZE_CELL_CNT; i += 2) {
+            digit = cells[i].GetDigit();
             hash[hi++] += (char) digit;
         }
 
         // if the cell-cnt is not a even numb, then set the low nibble of the last hashchar to 0b1111
-        if ((cell_cnt & 1) == 1) {
+        if ((SIZE_CELL_CNT & 1) == 1) {
             hash[hash.length - 1] |= 0b0000_1111;
         }
 
@@ -266,10 +266,10 @@ class Sudoku {
     /**
      * 获取一个数独的字串, 包含81个字符, 每个字符对应了每个格子的数字, 未提交的数字将以0指示
      */
-    public String toString() {
+    public String ToString() {
         String str = "";
         for (Cell cell : cells) {
-            str += cell.getDigit();
+            str += cell.GetDigit();
         }
         str += "\0";
         return str;
@@ -279,36 +279,36 @@ class Sudoku {
      * 获取一个可以用于打印的数独面板字串, 字串以图形化的方式展示当前的数独
      * @return 返回字串
      */
-    public String toPrints() {
-        char onecell[] = new char[3];
-        onecell[0] = ' ';
-        onecell[1] = 'd';
-        onecell[2] = ' ';
-        String h_tab = "+-----------+-----------+-----------+";
+    public String ToPrints() {
+        char cellText[] = new char[3];
+        cellText[0] = ' ';
+        cellText[1] = 'd';
+        cellText[2] = ' ';
+        String hTab = "+-----------+-----------+-----------+";
 
         int ci = 0;
         int cd = 0;
         String output = "";
         for (int _4_ = 0; _4_ < 3; _4_++) {
-            output = output + h_tab + '\n';
+            output = output + hTab + '\n';
             for (int _3_ = 0; _3_ < 3; _3_++) {
                 output += "| ";
                 for (int _2_ = 0; _2_ < 3; _2_++) {
                     for (int _1_ = 0; _1_ < 3; _1_++) {
-                        cd = cells[ci++].getDigit();
+                        cd = cells[ci++].GetDigit();
                         if (cd == 0) {
-                            onecell[1] = ' ';
+                            cellText[1] = ' ';
                         } else {
-                            onecell[1] = (char) (cd + '0');
+                            cellText[1] = (char) (cd + '0');
                         }
-                        output += new String(onecell);
+                        output += new String(cellText);
                     }
                     output += " | ";
                 }
                 output += "\n";
             }
         }
-        output += h_tab;
+        output += hTab;
 
         return output;
         /*
@@ -330,26 +330,26 @@ class Sudoku {
 
     /**
      * 获取所有与指定格子同范围的朋友格子的索引数组
-     * @param ci 指定格子的索引
+     * @param currentIndex 指定格子的索引
      * @return 返回同范围朋友格子索引的数组
      */
-    public int[] getAllMates(int ci) {
-        int mate_cnt = row_cnt - 1 + col_cnt - 1 + 4;
-        int mates[] = new int[mate_cnt];
-        int mi = 0;
+    public int[] GetAllMates(int currentIndex) {
+        int mateCount = SIZE_ROW_CNT - 1 + SIZE_COL_CNT - 1 + 4;
+        int mates[] = new int[mateCount];
+        int mateIndex = 0;
         int range[];
 
-        range = getRangeMates(ci, ROW);
+        range = GetRangeMates(currentIndex, RANGE_ROW);
         for (int i : range) {
-            mates[mi++] = i;
+            mates[mateIndex++] = i;
         }
-        range = getRangeMates(ci, COL);
+        range = GetRangeMates(currentIndex, RANGE_COL);
         for (int i : range) {
-            mates[mi++] = i;
+            mates[mateIndex++] = i;
         }
-        range = getRangeMates(ci, BLO_ONLY);
+        range = GetRangeMates(currentIndex, RANGE_BLO_ONLY);
         for (int i : range) {
-            mates[mi++] = i;
+            mates[mateIndex++] = i;
         }
 
         return mates;
@@ -360,9 +360,9 @@ class Sudoku {
      * @return 返回真, 如果所有格子都已经提交数字
      * @apiNote 单纯检查每个格子是否有提交数字, 不检查矛盾
      */
-    public boolean isFinished() {
+    public boolean IsFinished() {
         for (Cell cell : cells) {
-            if (cell.getDigit() == 0) {
+            if (cell.GetDigit() == 0) {
                 return false;
             }
         }
@@ -375,43 +375,8 @@ class Sudoku {
      * @return 返回指定格子已提交的数字
      * @return 返回0, 如果没有数字被提交过
      */
-    public int getCellDigit(int index) {
-        return cells[index].getDigit();
-    }
-
-    /**
-     * 提交指定的数字到指定的格子
-     * @param index 要提交到的格子
-     * @param digit 要被提交的数字
-     * @param USE_HISTORY 指定是否纪录历史, 如果可用
-     * @return 返回假, 如果数字不正确(此数字在此格子中不可用)
-     * @apiNote 如果要提交的数字是0, 则函数不做任何事情, 且返回真
-     */
-    private boolean commit(int index, int digit, boolean USE_HISTORY) {
-        // commit one cell with the specified digit
-        // returns true when no wrong happened
-        // returns false when the specified digit isnt right
-        //! careful: if the digit==0, this func changes nothing and returns true instead of false
-        if (digit == 0) {
-            return true;
-        }
-
-        // this digit has conflict with another mate-cell
-        if (cells[index].isMarked(digit) == true) {
-            return false;
-        }
-
-        cells[index].setDigit(digit);
-        markAllMates(index, digit);
-
-        if (USE_HISTORY == true) {
-            if ((history != null) && (enable_history == true)) {
-                Operation op = new Operation(Operation.COMMIT, index, digit);
-                history.newdo(op);
-            }
-        }
-
-        return true;
+    public int GetCellDigit(int index) {
+        return cells[index].GetDigit();
     }
 
     /**
@@ -421,8 +386,8 @@ class Sudoku {
      * @return 返回假, 如果数字不正确(此数字在此格子中不可用)
      * @apiNote 如果要提交的数字是0, 则函数不做任何事情, 且返回真
      */
-    public boolean commit(int index, int digit) {
-        boolean b = commit(index, digit, false);
+    public boolean Commit(int index, int digit) {
+        boolean b = Commit(index, digit, false);
         return b;
     }
 
@@ -433,41 +398,9 @@ class Sudoku {
      * @return 返回假, 如果数字不正确(此数字在此格子中不可用)
      * @apiNote 如果要提交的数字是0, 则函数不做任何事情, 且返回真
      */
-    public boolean commitH(int index, int digit) {
-        boolean b = commit(index, digit, true);
+    public boolean CommitH(int index, int digit) {
+        boolean b = Commit(index, digit, true);
         return b;
-    }
-
-    /**
-     * 取消提交指定的格子
-     * @param index 要取消的格子索引
-     * @param USE_HISTORY 指定是否纪录历史, 如果可用
-     * @apiNote 如果此格子未提交任何数字, 则此函数不进行任何操作
-     */
-    private void uncommit(int index, boolean USE_HISTORY) {
-        int digit = cells[index].getDigit();
-        if (digit == 0) {
-            return;
-        }
-
-        // update self mark-list and committed-digit
-        cells[index].data = 0;
-        int mates[] = getAllMates(index);
-        for (int mi : mates) {
-            int md = getCellDigit(mi);
-            if (md != 0) {
-                cells[index].mark(md);
-            }
-        }
-
-        unmarkAllMates(index, digit);
-
-        if (USE_HISTORY == true) {
-            if ((history != null) && (enable_history == true)) {
-                Operation op = new Operation(Operation.UNCOMMIT, index, digit);
-                history.newdo(op);
-            }
-        }
     }
 
     /**
@@ -476,45 +409,45 @@ class Sudoku {
      * @return 返回字串数组, 每个字串包含一个格子的详细信息
      * @apiNote 格式: [Debug Mates] 格子范围: d已提交数字 @格子索引 | 格子标记列表
      */
-    public String[] debugMates(int index) {
+    public String[] DebugMates(int index) {
         String retn[] = new String[1 + 8 + 8 + 8];
-        int ri = 0;
-        int digit = getCellDigit(index);
+        int ri = 0; // index of range
+        int digit = GetCellDigit(index);
         int marks[] = new int[9];
-        String mark_str;
+        String markStr;
 
-        mark_str = "";
-        marks = cells[index].debugMarks();
+        markStr = "";
+        marks = cells[index].DebugMarks();
         for (int m : marks) {
-            mark_str += m;
+            markStr += m;
         }
         marks = null;
-        retn[ri++] = "[Debug Mates] " + "curr-cell: d" + digit + " @" + index + " | " + mark_str;
+        retn[ri++] = "[Debug Mates] " + "curr-cell: d" + digit + " @" + index + " | " + markStr;
 
         for (int r = 0; r < 3; r++) {
-            String range_str = "";
+            String rangeStr = "";
             switch (r) {
-                case ROW:
-                    range_str = "row-mates";
+                case RANGE_ROW:
+                    rangeStr = "row-mates";
                     break;
-                case COL:
-                    range_str = "col-mates";
+                case RANGE_COL:
+                    rangeStr = "col-mates";
                     break;
-                case BLO:
-                    range_str = "blo-mates";
+                case RANGE_BLO_ANY:
+                    rangeStr = "blo-mates";
                     break;
                 default:
                     break;
             }
-            int mates[] = getRangeMates(index, r);
+            int mates[] = GetRangeMates(index, r);
             for (int mi : mates) {
-                mark_str = "";
-                marks = cells[mi].debugMarks();
+                markStr = "";
+                marks = cells[mi].DebugMarks();
                 for (int m : marks) {
-                    mark_str += m;
+                    markStr += m;
                 }
                 marks = null;
-                retn[ri++] = "[Debug Mates] " + range_str + ": d" + getCellDigit(mi) + " @" + mi + " | " + mark_str;
+                retn[ri++] = "[Debug Mates] " + rangeStr + ": d" + GetCellDigit(mi) + " @" + mi + " | " + markStr;
             }
         }
 
@@ -526,8 +459,8 @@ class Sudoku {
      * @param index 要取消的格子索引
      * @apiNote 如果此格子未提交任何数字, 则此函数不进行任何操作
      */
-    public void uncommit(int index) {
-        uncommit(index, false);
+    public void Uncommit(int index) {
+        Uncommit(index, false);
     }
 
     /**
@@ -535,8 +468,8 @@ class Sudoku {
      * @param index 要取消的格子索引
      * @apiNote 如果此格子未提交任何数字, 则此函数不进行任何操作
      */
-    public void uncommitH(int index) {
-        uncommit(index, true);
+    public void UncommitH(int index) {
+        Uncommit(index, true);
     }
 
     /**
@@ -545,8 +478,8 @@ class Sudoku {
      * @return 返回-1, 如果发现一个错误
      * @apiNote 出于性能和场景率考虑, 此函数被设计为直接修改数独, 无论函数成功与否, 如需防止数独被破坏, 请自行备份原始哈希并重载数独, 或启用历史纪录并失败时撤销操作
      */
-    public int commitAll() {
-        int r = fill(false);
+    public int CommitAll() {
+        int r = Fill(false);
         return r;
     }
 
@@ -556,8 +489,8 @@ class Sudoku {
      * @return 返回-1, 如果发现一个错误
      * @apiNote 出于性能和场景率考虑, 此函数被设计为直接修改数独, 无论函数成功与否, 如需防止数独被破坏, 请自行备份原始哈希并重载数独, 或启用历史纪录并失败时撤销操作
      */
-    public int commitAllH() {
-        int r = fill(true);
+    public int CommitAllH() {
+        int r = Fill(true);
         return r;
     }
 
@@ -568,14 +501,14 @@ class Sudoku {
      * @return 返回0, 如果无法确定可被提交的数字
      * @return 返回-1, 如果发现一个错误(在数独中发现冲突的两个格子)
      */
-    public int detectDigit(int index) {
+    public int DetectDigit(int index) {
         // try to find out the determinable digit of this cell
         // return it when found
         // returns 0, when didnot find
         // returns -1, when found a wrong (a bad sudoku)
 
         int digit;
-        digit = detectBySelf(index);
+        digit = DetectBySelf(index);
         if (digit > 0) {
             return digit;
         }
@@ -583,7 +516,7 @@ class Sudoku {
             return -1;
         }
 
-        digit = detectByMates(index);
+        digit = DetectByMates(index);
         if (digit > 0) {
             return digit;
         }
@@ -597,14 +530,14 @@ class Sudoku {
     /**
      * 根据现有数独, 探测所有格子可被提交的数字, 如果最终得到答案则返回
      * @return 返回答案数独, 如果探测到
-     * @return 返回null, 如果探测所有格子后, 任意有未确定的格子
+     * @return 返回null, 如果探测所有格子后, 任意有未确定的格子, 或数独存在错误
      */
-    public Sudoku detectAnser() {
+    public Sudoku DetectAnser() {
         // find out the answer of curr-sudoku, and returns the answer-sudoku
         // returns null when did not or can not find the answer
 
         Sudoku test = new Sudoku(this);
-        int retn = test.updateToAnswer(false);
+        int retn = test.UpdateToAnswer(false);
         if (retn == 1) {
             return test;
         }
@@ -617,66 +550,66 @@ class Sudoku {
      * @return 返回null, 如果没有更多答案了
      * @apiNote 当中途不再需要更多答案时, 应调用对应的结束函数, 以释放此函数占用的堆空间(包含一个数独对象(带最大10w历史纪录)和一个待猜对象)
      */
-    public Sudoku guessAnswers() {
+    public Sudoku GuessAnswers() {
         // lv0: detect the answer
-        if (guess_sudoku == null) {
-            guess_sudoku = new Sudoku(this.toHash());
-            int r = guess_sudoku.updateToAnswer(false);
+        if (guessingSudoku == null) {
+            guessingSudoku = new Sudoku(this.ToHash());
+            int r = guessingSudoku.UpdateToAnswer(false);
             switch (r) {
                 case -1: // bad sudoku, returns null
-                    guessEnd();
+                    GuessEnd();
                     return null;
                 case 1: // detected, returns the answer
-                    guess_todo = null;
-                    return new Sudoku(guess_sudoku.toHash());
+                    guessingTodo = null;
+                    return new Sudoku(guessingSudoku.ToHash());
                 default: // need to guess, init GuessTodo
-                    guess_todo = new GuessTodo(guess_sudoku);
-                    guess_sudoku.installHistory(99999);
+                    guessingTodo = new GuessTodo(guessingSudoku);
+                    guessingSudoku.InstallHistory(99999);
                     break;
             }
         }
 
         // lv0.5: answer detected above, so no more answers
-        if (guess_todo == null) {
-            guessEnd();
+        if (guessingTodo == null) {
+            GuessEnd();
             return null;
         }
 
         // lv1+: didnt detect answer, so need to guess
         while (true) {
             // get the cell and digit to guess
-            int index = guess_todo.index();
-            int digit = guess_todo.digit();
+            int index = guessingTodo.index();
+            int digit = guessingTodo.digit();
             // when no more guess-digit
             if (digit == -1) {
                 // undo update guess-sudoku (did this when guessing the previous cell )
-                boolean b = guess_sudoku.undo();
+                boolean b = guessingSudoku.Undo();
                 if (b == false) { // when no update operation, means didnt guess any cell before, here is lv1
-                    guessEnd();
+                    GuessEnd();
                     return null;
                 }
                 // undo commit (did this when guessing the previous cell )
-                Operation op = guess_sudoku.history.undo(); // get the previous guess-cell and guess-digit
-                guess_sudoku.uncommit(op.index); // undo this commit
+                Operation op = guessingSudoku.history.Undo(); // get the previous guess-cell and guess-digit
+                guessingSudoku.Uncommit(op.index); // undo this commit
                 // recover guess-todo to the previous level
-                guess_todo = new GuessTodo(guess_sudoku);
-                while (guess_todo.digit() != op.digit) {
+                guessingTodo = new GuessTodo(guessingSudoku);
+                while (guessingTodo.digit() != op.digit) {
                 }
                 continue;// go back to the previous level(cell)
             }
 
             // try one digit of current level(cell)
-            Sudoku test = new Sudoku(guess_sudoku);
-            test.commit(index, digit, false);
-            switch (test.updateToAnswer(false)) {
+            Sudoku test = new Sudoku(guessingSudoku);
+            test.Commit(index, digit, false);
+            switch (test.UpdateToAnswer(false)) {
                 case 1:// found answer
                     return test;// returns answer
                 case -1:// found error
                     continue;// try the next digit
                 default:// nothing found
-                    guess_sudoku.commit(index, digit, true);
-                    guess_sudoku.updateToAnswer(true);
-                    guess_todo = new GuessTodo(guess_sudoku);
+                    guessingSudoku.Commit(index, digit, true);
+                    guessingSudoku.UpdateToAnswer(true);
+                    guessingTodo = new GuessTodo(guessingSudoku);
                     continue;// guess the next cell
             }
         }
@@ -685,10 +618,10 @@ class Sudoku {
     /**
      * 释放此系列函数占用的内存, 可用于手动释放
      */
-    public void guessEnd() {
-        guess_sudoku.uninstallHistory();
-        guess_sudoku = null;
-        guess_todo = null;
+    public void GuessEnd() {
+        guessingSudoku.UninstallHistory();
+        guessingSudoku = null;
+        guessingTodo = null;
     }
 
     /**
@@ -698,16 +631,16 @@ class Sudoku {
      * @return 返回冲突格子的索引数组
      * @apiNote 通过检查同范围内朋友格子已提交的数字, 而非标记列表
      */
-    public int[] getAllConflicts(int index, int digit) {
+    public int[] GetAllConflicts(int index, int digit) {
         // returns the index of conflict-cells (by checking committed digit)
 
         // get the index of all the conflict-cells
-        int confs[] = new int[row_cnt + col_cnt + cellcnt_inblo - 3];
-        int ci = 0;
-        int mates[] = getAllMates(index);
+        int confs[] = new int[SIZE_ROW_CNT + SIZE_COL_CNT + SIZE_BLO_CELLCNT - 3];
+        int ci = 0; // index of confs-array
+        int mates[] = GetAllMates(index);
         for (int mi : mates) {
             // when same digit
-            if (cells[mi].getDigit() == digit) {
+            if (cells[mi].GetDigit() == digit) {
                 confs[ci++] = mi;
             }
         }
@@ -723,34 +656,34 @@ class Sudoku {
 
     /**
      * 为数独对象安装一个历史纪录对象, 并启用历史纪录功能
-     * @param max_cnt 指定最大可纪录的历史数量
+     * @param maxCount 指定最大可纪录的历史数量
      * @apiNote 如果已经有一个历史纪录, 则旧的会直接被丢弃!
      */
-    public void installHistory(int max_cnt) {
-        history = new History(max_cnt);
-        enable_history = true;
+    public void InstallHistory(int maxCount) {
+        history = new History(maxCount);
+        FLAG_HISTORY = true;
     }
 
     /**
      * 卸载已安装的历史纪录对象, 并关闭历史纪录功能, 如果没有则此函数不做任何事情
      */
-    public void uninstallHistory() {
+    public void UninstallHistory() {
         history = null;
-        enable_history = false;
+        FLAG_HISTORY = false;
     }
 
     /**
      * 启用历史纪录功能, 如果无历史纪录对象, 则不起任何作用
      */
-    public void enableHistory() {
-        enable_history = true;
+    public void EnableHistory() {
+        FLAG_HISTORY = true;
     }
 
     /**
      * 禁用历史纪录功能
      */
-    public void disableHistory() {
-        enable_history = false;
+    public void DisableHistory() {
+        FLAG_HISTORY = false;
     }
 
     /**
@@ -758,8 +691,8 @@ class Sudoku {
      * @return 返回否, 如果未执行和执行失败
      * @apiNote 须数独对象带有并启用了历史纪录对象
      */
-    public boolean undo() {
-        return doHistory(true);
+    public boolean Undo() {
+        return DoHistory(true);
     }
 
     /**
@@ -767,20 +700,20 @@ class Sudoku {
      * @return 返回否, 如果未执行和执行失败
      * @apiNote 须数独对象带有并启用了历史纪录对象
      */
-    public boolean redo() {
-        return doHistory(false);
+    public boolean Redo() {
+        return DoHistory(false);
     }
 
     /**
      * 获取历史纪录字串数组, 每个字串包含一条历史纪录
-     * @param op_cnt 要获取的纪录数
-     * @param max_redo_cnt 其中最多包含几条redo数
+     * @param operationCount 要获取的纪录数
+     * @param maxRedoCount 其中最多包含几条redo数
      * @return 返回多条纪录字串的数组
      * @apiNote 格式: [History] 操作代码 @操作数一(格子) :操作数二(数字)
      */
-    public String[] getHistorys(int op_cnt, int max_redo_cnt) {
+    public String[] GetHistorys(int operationCount, int maxRedoCount) {
         if (history != null) {
-            String strs[] = history.getStrings(op_cnt, max_redo_cnt);
+            String strs[] = history.getStrings(operationCount, maxRedoCount);
             return strs;
         }
         return null;
@@ -790,21 +723,21 @@ class Sudoku {
 
     /**
      * 加载数独, 从一个指定的数独哈希, 此哈希必须正确, 因为不进行任何额外检查, 多用于从备份的哈希恢复数独
-     * @param correct_hash 要加载的数独哈希
+     * @param correctHash 要加载的数独哈希
      * @apiNote 由于不可知哈希是否被篡改, 同时为确保类外的操作皆安全, 所以仅类内可用
      * 
      */
-    private Sudoku(char[] correct_hash) {
+    private Sudoku(char[] correctHash) {
         this();
-        loadCorrectHash(correct_hash);
+        LoadCorrectHash(correctHash);
     }
 
     /**
      * 实例化cell-array的每个元素
      */
-    private void initCells() {
-        cells = new Cell[cell_cnt];
-        for (int i = 0; i < cell_cnt; i++) {
+    private void InitCells() {
+        cells = new Cell[SIZE_CELL_CNT];
+        for (int i = 0; i < SIZE_CELL_CNT; i++) {
             cells[i] = new Cell();
         }
     }
@@ -814,20 +747,20 @@ class Sudoku {
     * @param hash 要加载的数独哈希
     * @apiNote 由于不可知哈希是否被篡改, 同时为确保类外的操作皆安全, 所以仅类内可用
     */
-    private void loadCorrectHash(char[] hash) {
+    private void LoadCorrectHash(char[] hash) {
         // !!! For internal use only: hash must from a correct sudoku, cos this func doesnt backup original sudoku and doesnt check digit conflicts form hash
 
         // reset cells
-        initCells();
+        InitCells();
 
         // load cells from hash
         int index = 0;
         for (char c : hash) {
             int hnib = c >>> 4;
-            commit(index++, hnib);
+            Commit(index++, hnib);
             int lnib = c & 0b1111;
             if (lnib != 0b1111) {
-                commit(index++, lnib);
+                Commit(index++, lnib);
             }
         }
     }
@@ -839,36 +772,36 @@ class Sudoku {
      * @return 返回-1, 如果发现一个错误
      * @apiNote 出于性能和场景率考虑, 此函数被设计为直接修改数独, 无论函数成功与否, 如需防止数独被破坏, 请自行备份原始哈希并重载数独, 或启用历史纪录并失败时撤销操作
      */
-    private int fill(boolean USE_HISTORY) {
+    private int Fill(boolean USE_HISTORY) {
         // detect the determinable digit of each cell and commit them
         // returns the count of detected
         // returns -1 when found a wrong
         //! careful: even if the func fails,  will not recover the sudoku
 
         Operation op = new Operation(Operation.ALLDETERM, 0, 0);
-        boolean record_history = ((history != null) && (enable_history == true) && (USE_HISTORY == true));
+        boolean HISTORY_ON = ((history != null) && (FLAG_HISTORY == true) && (USE_HISTORY == true));
 
-        if (record_history == true) {
-            history.newdo(op);
+        if (HISTORY_ON == true) {
+            history.NewDO(op);
         }
 
         int cnt = 0;
-        boolean found_new;
+        boolean FOUND_NEW;
         // using `find...Marked` and `find...Range` instead of `detectOneCell(i)` to find all determinable digits
         // to find more digits or wrong quickly, using `find...Marked` first, cos it is more quickly than `find...Range`
         do {
-            found_new = false;
-            for (int i = 0; i < cell_cnt; i++) {
+            FOUND_NEW = false;
+            for (int i = 0; i < SIZE_CELL_CNT; i++) {
                 // skip the committed cells
-                int cur_d = cells[i].getDigit();
+                int cur_d = cells[i].GetDigit();
                 if (cur_d != 0) {
                     continue;
                 }
                 // find out the digit
-                int d = detectBySelf(i);
+                int d = DetectBySelf(i);
                 if (d == -1) {
-                    if (record_history == true) {
-                        history.newdo(op);
+                    if (HISTORY_ON == true) {
+                        history.NewDO(op);
                     }
                     return -1;
                 }
@@ -876,26 +809,26 @@ class Sudoku {
                     continue;
                 }
                 // when found
-                commit(i, d, USE_HISTORY);
+                Commit(i, d, USE_HISTORY);
                 cnt++;
-                found_new = true;
+                FOUND_NEW = true;
             }
-        } while (found_new == true);
+        } while (FOUND_NEW == true);
 
         // to find all determinable digits, using `fidn...Range` is necessary
         do {
-            found_new = false;
-            for (int i = 0; i < cell_cnt; i++) {
+            FOUND_NEW = false;
+            for (int i = 0; i < SIZE_CELL_CNT; i++) {
                 // skip the committed cells
-                int cur_d = cells[i].getDigit();
+                int cur_d = cells[i].GetDigit();
                 if (cur_d != 0) {
                     continue;
                 }
                 // find out the digit
-                int d = detectByMates(i);
+                int d = DetectByMates(i);
                 if (d == -1) {
-                    if (record_history == true) {
-                        history.newdo(op);
+                    if (HISTORY_ON == true) {
+                        history.NewDO(op);
                     }
                     return -1;
                 }
@@ -903,14 +836,14 @@ class Sudoku {
                     continue;
                 }
                 // when found
-                commit(i, d, USE_HISTORY);
+                Commit(i, d, USE_HISTORY);
                 cnt++;
-                found_new = true;
+                FOUND_NEW = true;
             }
-        } while (found_new == true);
+        } while (FOUND_NEW == true);
 
-        if (record_history == true) {
-            history.newdo(op);
+        if (HISTORY_ON == true) {
+            history.NewDO(op);
         }
         return cnt;
     }
@@ -922,20 +855,20 @@ class Sudoku {
      * @return 返回0, 如果数独需要进一步解答(guess), 即存在不能确定的格子
      * @return 返回-1, 如果在数独中发现错误
      */
-    private int updateToAnswer(boolean USE_HISTORY) {
+    private int UpdateToAnswer(boolean USE_HISTORY) {
         // detect all determinable cells and committed them
         // returns -1 when a bad sudoku
         // returns 1 when a solved sudoku
         // returns 0 when a pending sudoku (need to guess)
         //! careful: even if the func fails,  will not recover the sudoku
 
-        int cnt = fill(USE_HISTORY);
+        int cnt = Fill(USE_HISTORY);
         if ((cnt == -1)) {
             // sudoku is bad
             return -1;
         }
 
-        boolean over = isFinished();
+        boolean over = IsFinished();
         if (over == true) {
             // all cells were committed
             return 1;
@@ -951,10 +884,10 @@ class Sudoku {
      * @param range 指定是哪个范围, 是行还是列还是块还是块(且不同行、不同列)
      * @return 返回此范围内朋友格子在数独中的索引数组
      */
-    private int[] getRangeMates(int ci, int range) {
+    private int[] GetRangeMates(int ci, int range) {
         int mates[]; // the array of the index of the mate-cells
-        int x = ci % col_cnt; // the x-coord on sudoku of the curr-cell
-        int y = ci / col_cnt; // the y-coord on sudoku of the curr-cell
+        int x = ci % SIZE_COL_CNT; // the x-coord on sudoku of the curr-cell
+        int y = ci / SIZE_COL_CNT; // the y-coord on sudoku of the curr-cell
         int fx; // the x-coord on sudoku of the first cell in range
         int fy; // the y-coord on sudoku of the first cell in range
         int fi; // the index of the first cell in range
@@ -962,12 +895,12 @@ class Sudoku {
         int mi; // the index in array
 
         switch (range) {
-            case ROW: // ROW
-                fi = y * col_cnt + 0;
+            case RANGE_ROW: // ROW
+                fi = y * SIZE_COL_CNT + 0;
                 mi = 0;
-                mates = new int[col_cnt - 1];
+                mates = new int[SIZE_COL_CNT - 1];
                 ri = fi - 1;
-                for (int i = 0; i < col_cnt; i++) {
+                for (int i = 0; i < SIZE_COL_CNT; i++) {
                     ri++;
                     if (ri == ci) {
                         continue;
@@ -975,57 +908,57 @@ class Sudoku {
                     mates[mi++] = ri;
                 }
                 break;
-            case COL: // COL
+            case RANGE_COL: // COL
                 fi = x + 0;
                 mi = 0;
-                mates = new int[row_cnt - 1];
-                ri = fi - col_cnt;
-                for (int i = 0; i < row_cnt; i++) {
-                    ri += col_cnt;
+                mates = new int[SIZE_ROW_CNT - 1];
+                ri = fi - SIZE_COL_CNT;
+                for (int i = 0; i < SIZE_ROW_CNT; i++) {
+                    ri += SIZE_COL_CNT;
                     if (ri == ci) {
                         continue;
                     }
                     mates[mi++] = ri;
                 }
                 break;
-            case BLO: // BLO
-                fx = x / colcnt_inblo * colcnt_inblo;
-                fy = y / rowcnt_inblo * rowcnt_inblo;
-                fi = fx + fy * col_cnt;
+            case RANGE_BLO_ANY: // BLO
+                fx = x / SIZE_BLO_COLCNT * SIZE_BLO_COLCNT;
+                fy = y / SIZE_BLO_ROWCNT * SIZE_BLO_ROWCNT;
+                fi = fx + fy * SIZE_COL_CNT;
                 mi = 0;
-                mates = new int[cellcnt_inblo - 1];
+                mates = new int[SIZE_BLO_CELLCNT - 1];
                 ri = fi - 1;
-                for (int by = 0; by < rowcnt_inblo; by++) {
-                    for (int bx = 0; bx < colcnt_inblo; bx++) {
+                for (int by = 0; by < SIZE_BLO_ROWCNT; by++) {
+                    for (int bx = 0; bx < SIZE_BLO_COLCNT; bx++) {
                         ri++;
                         if (ri == ci) {
                             continue;
                         }
                         mates[mi++] = ri;
                     }
-                    ri -= colcnt_inblo;
-                    ri += col_cnt;
+                    ri -= SIZE_BLO_COLCNT;
+                    ri += SIZE_COL_CNT;
                 }
                 break;
-            case BLO_ONLY: // BLO
-                fx = x / colcnt_inblo * colcnt_inblo;
-                fy = y / rowcnt_inblo * rowcnt_inblo;
-                fi = fx + fy * col_cnt;
+            case RANGE_BLO_ONLY: // BLO
+                fx = x / SIZE_BLO_COLCNT * SIZE_BLO_COLCNT;
+                fy = y / SIZE_BLO_ROWCNT * SIZE_BLO_ROWCNT;
+                fi = fx + fy * SIZE_COL_CNT;
                 mi = 0;
-                mates = new int[cellcnt_inblo - 1 - 4];
+                mates = new int[SIZE_BLO_CELLCNT - 1 - 4];
                 ri = fi - 1;
-                for (int by = 0; by < rowcnt_inblo; by++) {
-                    for (int bx = 0; bx < colcnt_inblo; bx++) {
+                for (int by = 0; by < SIZE_BLO_ROWCNT; by++) {
+                    for (int bx = 0; bx < SIZE_BLO_COLCNT; bx++) {
                         ri++;
-                        int rx = ri % col_cnt; // the x-coord on sudoku of the mate-cell
-                        int ry = ri / col_cnt; // the y-coord on sudoku of the mate-cell
+                        int rx = ri % SIZE_COL_CNT; // the x-coord on sudoku of the mate-cell
+                        int ry = ri / SIZE_COL_CNT; // the y-coord on sudoku of the mate-cell
                         if ((rx == x) || (ry == y)) { // skip the blo-mate-cell in the same row-range or col-range
                             continue;
                         }
                         mates[mi++] = ri;
                     }
-                    ri -= colcnt_inblo;
-                    ri += col_cnt;
+                    ri -= SIZE_BLO_COLCNT;
+                    ri += SIZE_COL_CNT;
                 }
                 break;
             default:
@@ -1041,10 +974,10 @@ class Sudoku {
      * @param index 当前格子的索引
      * @param digit 当前格子的数字
      */
-    private void markAllMates(int index, int digit) {
-        int mates[] = getAllMates(index);
+    private void MarkAllMates(int index, int digit) {
+        int mates[] = GetAllMates(index);
         for (int mi : mates) {
-            cells[mi].mark(digit);
+            cells[mi].Mark(digit);
         }
     }
 
@@ -1055,10 +988,10 @@ class Sudoku {
      * @param range 指定的范围
      * @return 返回真, 如果指定的数字在指定的范围呢
      */
-    private boolean wasDigitInRange(int digit, int ci, int range) {
-        int mates[] = getRangeMates(ci, range);
+    private boolean WasDigitInRange(int digit, int ci, int range) {
+        int mates[] = GetRangeMates(ci, range);
         for (int mi : mates) {
-            if (cells[mi].getDigit() == digit) {
+            if (cells[mi].GetDigit() == digit) {
                 return true;
             }
         }
@@ -1071,40 +1004,40 @@ class Sudoku {
      * @param c2 格子2
      * @return 返回相同的范围的int代码
      */
-    private int getSameRange(int c1, int c2) {
-        int in_range = 0;
-        int x1 = c1 % col_cnt; // the x-coord on sudoku of the cell-1
-        int y1 = c1 / col_cnt; // the y-coord on sudoku of the cell-1
-        int x2 = c2 % col_cnt; // the x-coord on sudoku of the cell-2
-        int y2 = c2 / col_cnt; // the y-coord on sudoku of the cell-2
+    private int GetSameRange(int c1, int c2) {
+        int inRange = 0;
+        int x1 = c1 % SIZE_COL_CNT; // the x-coord on sudoku of the cell-1
+        int y1 = c1 / SIZE_COL_CNT; // the y-coord on sudoku of the cell-1
+        int x2 = c2 % SIZE_COL_CNT; // the x-coord on sudoku of the cell-2
+        int y2 = c2 / SIZE_COL_CNT; // the y-coord on sudoku of the cell-2
         if (y1 == y2) {
-            in_range += 0b1;
+            inRange += 0b1;
         }
         if (x1 == x2) {
-            in_range += 0b10;
+            inRange += 0b10;
         }
-        int bxB = x1 / colcnt_inblo * colcnt_inblo; // the left x-coord of the blo-range where cell-1 in
+        int bxB = x1 / SIZE_BLO_COLCNT * SIZE_BLO_COLCNT; // the left x-coord of the blo-range where cell-1 in
         int bxE = bxB + 3; // the right...
-        int byB = y1 / rowcnt_inblo * rowcnt_inblo; // the top y-coord of the blo-range where cell-1 in
+        int byB = y1 / SIZE_BLO_ROWCNT * SIZE_BLO_ROWCNT; // the top y-coord of the blo-range where cell-1 in
         int byE = byB + 3; // the bottom...
         if ((bxB <= x2) && (x2 < bxE) && (byB <= y2) && (y2 < byE)) {
-            in_range += 0b100;
+            inRange += 0b100;
         }
 
-        switch (in_range) {
+        switch (inRange) {
             case 0:
             default:
-                return NOP;
+                return RANGE_NA;
             case 0b1:
-                return ROW;
+                return RANGE_ROW;
             case 0b10:
-                return COL;
+                return RANGE_COL;
             case 0b100:
-                return BLO_ONLY;
+                return RANGE_BLO_ONLY;
             case 0b101:
-                return BLO_ROW;
+                return RANGE_BLO_ROW;
             case 0b110:
-                return BLO_COL;
+                return RANGE_BLO_COL;
         }
     }
 
@@ -1114,60 +1047,30 @@ class Sudoku {
      * @param digit 指定的数字
      * @apiNote 如果朋友格子的指定数字也被他自己的其他朋友格子标记过, 则不会取消, 也因此此函数计算偏多, 时间O(240)远超重载一个数独O(81), 优点在于空间O(1), 历史纪录类依赖此函数
      */
-    private void unmarkAllMates(int index, int digit) {
-        int mates[] = getAllMates(index);
+    private void UnmarkAllMates(int index, int digit) {
+        int mates[] = GetAllMates(index);
         for (int mi : mates) {
-            if (getCellDigit(mi) != 0) {
+            if (GetCellDigit(mi) != 0) {
                 continue;
             }
-            int range = getSameRange(mi, index);
-            /* switch (range) {
-                case ROW:
-                    if (true == wasDigitInRange(digit, mi, COL)) {
-                        continue;
-                    }
-                    if (true == wasDigitInRange(digit, mi, BLO)) {
-                        continue;
-                    }
-                    break;
-                case COL:
-                    if (true == wasDigitInRange(digit, mi, ROW)) {
-                        continue;
-                    }
-                    if (true == wasDigitInRange(digit, mi, BLO)) {
-                        continue;
-                    }
-                    break;
-                case BLO_ONLY:
-                case BLO_ROW:
-                case BLO_COL:
-                    if (true == wasDigitInRange(digit, mi, ROW)) {
-                        continue;
-                    }
-                    if (true == wasDigitInRange(digit, mi, COL)) {
-                        continue;
-                    }
-                    break;
-                default:
-                    break;
-            } */
-            if (range != ROW) { // check the cells in the same row of the mate-cell, if they disabled the digit of the mate-cell
-                if (true == wasDigitInRange(digit, mi, ROW)) {
+            int range = GetSameRange(mi, index);
+            if (range != RANGE_ROW) { // check the cells in the same row of the mate-cell, if they disabled the digit of the mate-cell
+                if (true == WasDigitInRange(digit, mi, RANGE_ROW)) {
                     continue;
                 }
             }
-            if (range != COL) { // check the cells in the same col of the mate-cell, if they disabled the digit of the mate-cell
-                if (true == wasDigitInRange(digit, mi, COL)) {
+            if (range != RANGE_COL) { // check the cells in the same col of the mate-cell, if they disabled the digit of the mate-cell
+                if (true == WasDigitInRange(digit, mi, RANGE_COL)) {
                     continue;
                 }
             }
-            if ((range != BLO_ONLY) && (range != BLO_ROW) && ((range != BLO_COL))) { // check the cells in the same blo of the mate-cell, if they disabled the digit of the mate-cell
-                if (true == wasDigitInRange(digit, mi, BLO)) {
+            if ((range != RANGE_BLO_ONLY) && (range != RANGE_BLO_ROW) && ((range != RANGE_BLO_COL))) { // check the cells in the same blo of the mate-cell, if they disabled the digit of the mate-cell
+                if (true == WasDigitInRange(digit, mi, RANGE_BLO_ANY)) {
                     continue;
                 }
             }
             // no mates of the mate-cell have committed this digit, means this digit was marked only by curr-cell, so unmark is safe.
-            cells[mi].unmark(digit);
+            cells[mi].Unmark(digit);
         }
     }
 
@@ -1178,13 +1081,13 @@ class Sudoku {
      * @return 返回0, 如果不只一个数字可用
      * @return 返回-1, 如果所有数字都不可用
      */
-    private int detectBySelf(int index) {
+    private int DetectBySelf(int index) {
         // check the digits-mark of this cell and find out the sole probable digit
         // returns this digit when found
         // returns 0 when more than one probable digits found
         // returns -1 when a wrong (no probable digit in this cell)
 
-        int digit = cells[index].ascertain();
+        int digit = cells[index].Ascertain();
         if (digit == -1) {
             // all digits of this cell is disabled
             return -1;
@@ -1205,7 +1108,7 @@ class Sudoku {
      * @return 返回0, 如果不存在这样的数字
      * @return 返回-1, 如果发现一个错误(这个数字在指定的格子中也不可用, 即同一个范围内没有格子可用此数字)
      */
-    private int detectByMates(int index) {
+    private int DetectByMates(int index) {
         // find out the digit which is disabled in all range-cells by their digits-marks, that means only curr-cell can enable it
         // returns the digit when found
         // returns 0 when didnt find
@@ -1214,9 +1117,9 @@ class Sudoku {
         for (int d = 1; d <= 9; d++) {
             for (int r = 0; r < 3; r++) {
                 boolean MATE_AVAILABLE = false;
-                int range_mates[] = getRangeMates(index, r);
-                for (int mi : range_mates) {
-                    if (cells[mi].isMarked(d) == true) {
+                int rangeMates[] = GetRangeMates(index, r);
+                for (int mi : rangeMates) {
+                    if (cells[mi].IsMarked(d) == true) {
                         continue;
                     }
                     MATE_AVAILABLE = true;
@@ -1227,7 +1130,7 @@ class Sudoku {
                     continue; // check the next range
                 }
                 // when all mate-cells in this range cannt commit this digit
-                if (cells[index].isMarked(d) == true) { // this digit was also disabled in the curr-cell
+                if (cells[index].IsMarked(d) == true) { // this digit was also disabled in the curr-cell
                     return -1;
                 }
                 return d;
@@ -1239,19 +1142,86 @@ class Sudoku {
     }
 
     /**
+    * 提交指定的数字到指定的格子
+    * @param index 要提交到的格子
+    * @param digit 要被提交的数字
+    * @param USE_HISTORY 指定是否纪录历史, 如果可用
+    * @return 返回假, 如果数字不正确(此数字在此格子中不可用)
+    * @apiNote 如果要提交的数字是0, 则函数不做任何事情, 且返回真
+    */
+    private boolean Commit(int index, int digit, boolean USE_HISTORY) {
+        // commit one cell with the specified digit
+        // returns true when no wrong happened
+        // returns false when the specified digit isnt right
+        //! careful: if the digit==0, this func changes nothing and returns true instead of false
+        if (digit == 0) {
+            return true;
+        }
+
+        // this digit has conflict with another mate-cell
+        if (cells[index].IsMarked(digit) == true) {
+            return false;
+        }
+
+        cells[index].SetDigit(digit);
+        MarkAllMates(index, digit);
+
+        if (USE_HISTORY == true) {
+            if ((history != null) && (FLAG_HISTORY == true)) {
+                Operation op = new Operation(Operation.COMMIT, index, digit);
+                history.NewDO(op);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * 取消提交指定的格子
+     * @param index 要取消的格子索引
+     * @param USE_HISTORY 指定是否纪录历史, 如果可用
+     * @apiNote 如果此格子未提交任何数字, 则此函数不进行任何操作
+     */
+    private void Uncommit(int index, boolean USE_HISTORY) {
+        int digit = cells[index].GetDigit();
+        if (digit == 0) {
+            return;
+        }
+
+        // update self mark-list and committed-digit
+        cells[index].data = 0;
+        int mates[] = GetAllMates(index);
+        for (int mi : mates) {
+            int md = GetCellDigit(mi);
+            if (md != 0) {
+                cells[index].Mark(md);
+            }
+        }
+
+        UnmarkAllMates(index, digit);
+
+        if (USE_HISTORY == true) {
+            if ((history != null) && (FLAG_HISTORY == true)) {
+                Operation op = new Operation(Operation.UNCOMMIT, index, digit);
+                history.NewDO(op);
+            }
+        }
+    }
+
+    /**
      * 执行历史纪录撤销或重做
      * @param UNDO 指定是撤销还是重做
      * @return 返回否, 如果未执行(执行失败), 可能原因是 1.新操作后redo 2.无纪录时undo
      */
-    private boolean doHistory(boolean UNDO) {
+    private boolean DoHistory(boolean UNDO) {
         Operation op;
-        boolean ALLDETERM = false;
+        boolean ALL_DETERM = false;
         do {
             // get operation
             if (UNDO == true) {
-                op = history.undo();
+                op = history.Undo();
             } else {
-                op = history.redo();
+                op = history.Redo();
             }
 
             // return when no operation
@@ -1261,8 +1231,8 @@ class Sudoku {
 
             // when operation is commitAllDeterminables()
             if (op.code == Operation.ALLDETERM) {
-                if (ALLDETERM == false) {
-                    ALLDETERM = true;
+                if (ALL_DETERM == false) {
+                    ALL_DETERM = true;
                     continue;
                 } else {
                     break;
@@ -1273,22 +1243,22 @@ class Sudoku {
             switch (op.code) {
                 case Operation.COMMIT:
                     if (UNDO == true) {
-                        uncommit(op.index);
+                        Uncommit(op.index);
                     } else {
-                        commit(op.index, op.digit);
+                        Commit(op.index, op.digit);
                     }
                     break;
                 case Operation.UNCOMMIT:
                     if (UNDO == true) {
-                        commit(op.index, op.digit);
+                        Commit(op.index, op.digit);
                     } else {
-                        uncommit(op.index);
+                        Uncommit(op.index);
                     }
                     break;
                 default:
                     break;
             }
-        } while (ALLDETERM == true);
+        } while (ALL_DETERM == true);
         return true;
     }
 
@@ -1306,39 +1276,39 @@ class Sudoku {
 
         /**
          * 给定一个数独, 寻找第一个未提交的格子, 并纪录此格子所有未被禁用的数字
-         * @param sudoku_to_guess 给定的数独
+         * @param sudokuToGuess 给定的数独
          */
-        public GuessTodo(Sudoku sudoku_to_guess) {
+        public GuessTodo(Sudoku sudokuToGuess) {
             di = 0;
 
             // get the first uncommitted cell to guess
             int index_ = 0;
-            for (Cell cell : sudoku_to_guess.cells) {
-                if (cell.getDigit() == 0) {
+            for (Cell cell : sudokuToGuess.cells) {
+                if (cell.GetDigit() == 0) {
                     break;
                 }
                 index_++;
             }
-            if (index_ == cell_cnt) {
+            if (index_ == SIZE_CELL_CNT) {
                 //! careful: dont use when a finished sudoku
             }
 
             // get all probable digits of this cell
             int digits_[] = new int[9];
-            int digit_cnt = 0;
+            int digitCount = 0;
             for (int d = 1; d <= 9; d++) {
-                if (sudoku_to_guess.cells[index_].isMarked(d) == false) {
+                if (sudokuToGuess.cells[index_].IsMarked(d) == false) {
                     // save this probable digit
-                    digits_[digit_cnt++] = d;
+                    digits_[digitCount++] = d;
                 }
             }
-            if (digit_cnt == 0) {
+            if (digitCount == 0) {
                 //! careful: dont use when a bad sudoku
             }
 
             // save local var `digits`
-            digits = new int[digit_cnt];
-            for (int i = 0; i < digit_cnt; i++) {
+            digits = new int[digitCount];
+            for (int i = 0; i < digitCount; i++) {
                 digits[i] = digits_[i];
             }
             digits_ = null;
@@ -1388,17 +1358,17 @@ class Sudoku {
     /**
      * 输出调试信息, 当前的guess-sudoku和guess-todo以及历史纪录
      */
-    private void debugGuess() {
+    private void DebugGuess() {
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>");
 
-        if (guess_todo != null) {
-            System.out.println("[guess-todo]\n" + guess_todo.debug());
+        if (guessingTodo != null) {
+            System.out.println("[guess-todo]\n" + guessingTodo.debug());
         }
 
-        if (guess_sudoku != null) {
-            System.out.println("[guess-sudoku]\n" + guess_sudoku.toPrints());
+        if (guessingSudoku != null) {
+            System.out.println("[guess-sudoku]\n" + guessingSudoku.ToPrints());
             System.out.println("[history]\n");
-            String hs[] = guess_sudoku.getHistorys(30, 1);
+            String hs[] = guessingSudoku.GetHistorys(30, 1);
             for (String h : hs) {
                 System.out.println(h);
             }
@@ -1421,8 +1391,8 @@ class Sudoku {
          * 高3位: 保留(未使用)
          */
         private short data; // zzzy_yyyy_yyyy_xxxx z:reserved y:dead-digit-marks x:committed-digit
-        private static final int D_WIDTH = 4; // bit-width of the committed-digit
-        private static final int M_WIDTH = 9; // bit-width of the dead-digit-marks
+        private static final int DIGIT_WIDTH = 4; // bit-width of the committed-digit
+        private static final int MARKS_WIDTH = 9; // bit-width of the dead-digit-marks
 
         //-- public
 
@@ -1438,8 +1408,8 @@ class Sudoku {
          * @return 返回已提交的数字
          * @return 返回0, 如果还没有数字被提交
          */
-        public int getDigit() {
-            int bm = (1 << D_WIDTH) - 1;
+        public int GetDigit() {
+            int bm = (1 << DIGIT_WIDTH) - 1;
             return data & bm;
         }
 
@@ -1448,17 +1418,17 @@ class Sudoku {
          * @param d 要提交的数字, 如果为0, 则此函数不做任何事情直接返回
          * @apiNote 不进行其他任何检查, 直接覆写committed-digit和mark-list
          */
-        public void setDigit(int d) {
+        public void SetDigit(int d) {
             if (d == 0) {
                 return;
             }
 
             // set dead-mark
-            int bm = 1 << D_WIDTH << d >>> 1;
+            int bm = 1 << DIGIT_WIDTH << d >>> 1;
             data = (short) ~bm;
 
             // set active digit
-            bm = (1 << D_WIDTH) - 1;
+            bm = (1 << DIGIT_WIDTH) - 1;
             bm = ~bm;
             data &= bm;
             data += d;
@@ -1472,15 +1442,15 @@ class Sudoku {
          * @return 返回0, 如果可用的数字不止一个
          * @return 返回-1, 如果出现错误(所有数字都不可用)
          */
-        public int ascertain() {
+        public int Ascertain() {
             // find out the sole enabled digit and returns it
             // returns -1 when all digits were disabled
             // returns 0 when didnt find
 
-            int bm = 1 << D_WIDTH >>> 1;
+            int bm = 1 << DIGIT_WIDTH >>> 1;
             boolean marked;
             int digit = 0;
-            for (int d = 1; d <= M_WIDTH; d++) {
+            for (int d = 1; d <= MARKS_WIDTH; d++) {
                 marked = (((bm << d) & data) == 1);
                 if (marked == false) {
                     // if the digit is not zero, means any enable digit has beed found before
@@ -1506,9 +1476,9 @@ class Sudoku {
          * @param d 要检查的数字
          * @return 返回真, 如果可用
          */
-        public boolean isMarked(int d) {
+        public boolean IsMarked(int d) {
             boolean marked = false;
-            int bm = 1 << D_WIDTH << d >>> 1;
+            int bm = 1 << DIGIT_WIDTH << d >>> 1;
             if ((data & bm) == bm) {
                 marked = true;
             }
@@ -1520,9 +1490,9 @@ class Sudoku {
          * @param d 要标记的数字
          * @apiNote 单纯将这个数字对应的标记位置1, 不进行其他任何操作
          */
-        public void mark(int d) {
+        public void Mark(int d) {
             d -= 1;
-            int bm = 1 << D_WIDTH << d;
+            int bm = 1 << DIGIT_WIDTH << d;
             data |= bm;
         }
 
@@ -1531,9 +1501,9 @@ class Sudoku {
          * @param d 要标记的数字
          * @apiNote 单纯将这个数字对应的标记位置0, 不进行其他任何操作
          */
-        public void unmark(int d) {
+        public void Unmark(int d) {
             d -= 1;
-            int bm = 1 << D_WIDTH << d;
+            int bm = 1 << DIGIT_WIDTH << d;
             data &= ~bm;
         }
 
@@ -1541,10 +1511,10 @@ class Sudoku {
          * 获取此格子每个数字的可用情况, 0为可用, 1为禁用(已被占用)
          * @return 返回int数组, 依次为数字1~9的可用情况
          */
-        public int[] debugMarks() {
+        public int[] DebugMarks() {
             int marks[] = new int[9];
             for (int i = 0; i < 9; i++) {
-                marks[i] = ((data >>> D_WIDTH >>> i) & 0b1);
+                marks[i] = ((data >>> DIGIT_WIDTH >>> i) & 0b1);
             }
             return marks;
         }
@@ -1582,10 +1552,10 @@ class Sudoku {
      * 历史纪录类, 用于纪录操作信息
      */
     private class History {
-        private Vector<Short> ops; // datas of history operations
-        private int op_index; // current operation index
-        private int max_op_cnt; // max op cnt limit
-        private int undo_cnt; // already undid op cnt
+        private Vector<Short> operationArray; // datas of history operations
+        private int operationIndex; // current operation index
+        private int maxOperationCount; // max op cnt limit
+        private int undoCount; // already undid op cnt
 
         //-- public
 
@@ -1594,51 +1564,51 @@ class Sudoku {
          * @param from 要拷贝的源
          */
         public History(History from) {
-            this.max_op_cnt = from.max_op_cnt;
-            this.op_index = from.op_index;
-            this.undo_cnt = from.undo_cnt;
+            this.maxOperationCount = from.maxOperationCount;
+            this.operationIndex = from.operationIndex;
+            this.undoCount = from.undoCount;
 
-            this.ops = new Vector<>();
-            for (int i = 0; i < from.ops.size(); i++) {
-                ops.add(from.ops.get(i));
+            this.operationArray = new Vector<>();
+            for (int i = 0; i < from.operationArray.size(); i++) {
+                operationArray.add(from.operationArray.get(i));
             }
         }
 
         /**
          * 实例一个指定最大记录数的新历史纪录
-         * @param max_op_cnt 指定最大记录数量
+         * @param maxOpCount 指定最大记录数量
          */
-        public History(int max_op_cnt) {
-            ops = new Vector<>();
-            op_index = -1;
-            this.max_op_cnt = max_op_cnt;
-            undo_cnt = 0;
+        public History(int maxOpCount) {
+            operationArray = new Vector<>();
+            operationIndex = -1;
+            this.maxOperationCount = maxOpCount;
+            undoCount = 0;
         }
 
         /**
          * 获取历史纪录字串数组, 每个字串包含一条历史纪录
          * @param count 要获取的纪录数
-         * @param max_redo_cnt 其中最多包含几条redo数
+         * @param maxRedoCount 其中最多包含几条redo数
          * @return 返回多条纪录字串的数组
          * @apiNote 格式: [History] 操作代码 @操作数一(格子) :操作数二(数字)
          */
-        public String[] getStrings(int count, int max_redo_cnt) {
-            int redo_cnt = (undo_cnt > max_redo_cnt) ? max_redo_cnt : undo_cnt;
-            count -= redo_cnt;
+        public String[] getStrings(int count, int maxRedoCount) {
+            int redoCount = (undoCount > maxRedoCount) ? maxRedoCount : undoCount;
+            count -= redoCount;
             int cnt;
-            if (ops.size() == max_op_cnt) {
-                cnt = max_op_cnt;
+            if (operationArray.size() == maxOperationCount) {
+                cnt = maxOperationCount;
             } else {
-                cnt = op_index + 1;
+                cnt = operationIndex + 1;
             }
             cnt = (cnt < count) ? cnt : count;
-            cnt += redo_cnt;
+            cnt += redoCount;
 
             String strs[] = new String[cnt];
 
-            int opi = op_index + redo_cnt;
+            int opi = operationIndex + redoCount;
             for (int i = 0; i < cnt; i++) {
-                short data = ops.get(opi--);
+                short data = operationArray.get(opi--);
                 Operation op = toOperation(data);
                 strs[i] = ("[History] " + op.code + " @" + op.index + " :" + op.digit);
             }
@@ -1650,19 +1620,19 @@ class Sudoku {
          * 纪录一个新的操作
          * @param op 要纪录的操作
          */
-        public void newdo(Operation op) {
-            short op_data = getData(op);
+        public void NewDO(Operation op) {
+            short opData = GetData(op);
 
-            op_index++;
-            if ((ops.size() < max_op_cnt) && (op_index == ops.size())) {
-                ops.add(op_data);
+            operationIndex++;
+            if ((operationArray.size() < maxOperationCount) && (operationIndex == operationArray.size())) {
+                operationArray.add(opData);
             }
-            if (op_index == max_op_cnt) {
-                op_index = 0;
+            if (operationIndex == maxOperationCount) {
+                operationIndex = 0;
             }
-            ops.set(op_index, op_data);
+            operationArray.set(operationIndex, opData);
 
-            undo_cnt = 0;
+            undoCount = 0;
         }
 
         /**
@@ -1670,20 +1640,20 @@ class Sudoku {
          * @return 返回包含当前操作信息的Operation对象
          * @return 返回null, 如果还没有任何纪录
          */
-        public Operation undo() {
-            if (op_index == -1) {
-                if (ops.size() == max_op_cnt) {
-                    op_index = max_op_cnt - 1;
+        public Operation Undo() {
+            if (operationIndex == -1) {
+                if (operationArray.size() == maxOperationCount) {
+                    operationIndex = maxOperationCount - 1;
                 } else {
                     return null;
                 }
             }
 
-            short op_data = ops.get(op_index);
+            short op_data = operationArray.get(operationIndex);
             Operation op = toOperation(op_data);
 
-            op_index--;
-            undo_cnt++;
+            operationIndex--;
+            undoCount++;
             return op;
         }
 
@@ -1692,19 +1662,19 @@ class Sudoku {
          * @return 返回下个操作的信息
          * @return 返回null, 如果没有下个操作
          */
-        public Operation redo() {
-            if (undo_cnt == 0) {
+        public Operation Redo() {
+            if (undoCount == 0) {
                 return null;
             }
-            undo_cnt--;
+            undoCount--;
 
-            op_index++;
-            if (op_index == max_op_cnt) {
-                op_index = 0;
+            operationIndex++;
+            if (operationIndex == maxOperationCount) {
+                operationIndex = 0;
             }
-            short op_data = ops.get(op_index);
+            short opData = operationArray.get(operationIndex);
 
-            Operation op = toOperation(op_data);
+            Operation op = toOperation(opData);
             return op;
         }
 
@@ -1714,23 +1684,23 @@ class Sudoku {
          * @param op 要从中提取数据的Operation对象
          * @return 返回等值的short数据
          */
-        private short getData(Operation op) {
-            short op_data = 0; // rr_ccc_iiii_iii_dddd | reserved code index digit
-            op_data += op.digit;
-            op_data += (op.index << 4);
-            op_data += (op.code << 11);
-            return op_data;
+        private short GetData(Operation op) {
+            short opData = 0; // rr_ccc_iiii_iii_dddd | reserved code index digit
+            opData += op.digit;
+            opData += (op.index << 4);
+            opData += (op.code << 11);
+            return opData;
         }
 
         /**
          * 将short类型的操作数据转为Operation对象返回, 用于为外部提供方便接口
-         * @param op_data 要提取操作信息的short数据
+         * @param opData 要提取操作信息的short数据
          * @return 返回等值的Operation对象
          */
-        private Operation toOperation(short op_data) {
-            int code = (op_data >>> 11) & 0b111;
-            int index = (op_data >>> 4) & 0b1111_111;
-            int digit = op_data & 0b1111;
+        private Operation toOperation(short opData) {
+            int code = (opData >>> 11) & 0b111;
+            int index = (opData >>> 4) & 0b1111_111;
+            int digit = opData & 0b1111;
             Operation op = new Operation(code, index, digit);
             return op;
         }
